@@ -12,7 +12,10 @@ type Tree struct {
 }
 
 func New() *Tree {
-	return &Tree{}
+	return &Tree{
+		left:  &Tree{},
+		right: &Tree{},
+	}
 }
 
 func (tree *Tree) Insert(key []byte, value int64) {
@@ -52,7 +55,9 @@ func (tree *Tree) Walk(fn WalkerFunc) {
 		tree.left.Walk(fn)
 	}
 
-	fn(tree.key, tree.value)
+	if !tree.IsLeaf() {
+		fn(tree.key, tree.value)
+	}
 
 	if !tree.right.IsLeaf() {
 		tree.right.Walk(fn)
