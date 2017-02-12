@@ -1,4 +1,4 @@
-# journald
+# journald [![Build Status](https://travis-ci.org/journald/journald.svg?branch=master)](https://travis-ci.org/journald/journald)
 
 journald goal is to provide an _append only durable log_ to applications.
 
