@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/journald/http"
 	"github.com/journald/lsmtree"
 )
 
@@ -12,7 +13,7 @@ func main() {
 	dbDirectoryPtr := flag.String("db", "./data", "database directory")
 	flag.Parse()
 
-	tree, err := lsmtree.New(5, *dbDirectoryPtr)
+	tree, err := lsmtree.New(10000, *dbDirectoryPtr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -46,6 +47,13 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
+		} else if flag.Args()[0] == "http" {
+			api, err := http.New(*dbDirectoryPtr)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			log.Fatal(api.ListenAndServe(":8080"))
 		}
 	}
 }
