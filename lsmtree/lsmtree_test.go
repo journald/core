@@ -98,19 +98,103 @@ func TestPutMergeC0IntoC1AfterThreshold(t *testing.T) {
 	}
 }
 
+func TestPutMergeC1IntoC2AfterThreshold(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "data")
+	if err != nil {
+		t.Error(err)
+	}
+
+	tree, err := New(2, tempDir)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// 25 letters starting from ASCII 'A': 65
+	for i := 65; i <= 89; i++ {
+		err = tree.Put(append([]byte("key"), byte(i)), []byte{byte(i)})
+		if err != nil {
+			t.Error(err)
+		}
+	}
+
+	if tree.C0.Size() != 1 {
+		t.Errorf("Given inserted data, C0 level should have exactly %d elements. It has %d", 1, tree.C0.Size())
+	}
+
+	if tree.C1.Size() != 4 {
+		t.Errorf("Given inserted data, C1 level should have exactly %d elements. It has %d", 10, tree.C1.Size())
+	}
+
+	if tree.C2.Size() != 20 {
+		t.Errorf("Given inserted data, C1 level should have exactly %d elements. It has %d", 10, tree.C1.Size())
+	}
+
+	expected := [][]byte{
+		[]byte("keyY"),
+	}
+	actual := tree.C0.SSTable.Keys()
+	for i, k := range expected {
+		if bytes.Compare(k, actual[i]) != 0 {
+			t.Errorf("Expected C0 keys to be %v, but got %v", ByteSliceSliceToStringSlice(expected), ByteSliceSliceToStringSlice(actual))
+		}
+	}
+
+	expected = [][]byte{
+		[]byte("keyU"),
+		[]byte("keyV"),
+		[]byte("keyW"),
+		[]byte("keyX"),
+	}
+	actual = tree.C1.SSTable.Keys()
+	for i, k := range expected {
+		if bytes.Compare(k, actual[i]) != 0 {
+			t.Errorf("Expected C1 keys to be %v, but got %v", ByteSliceSliceToStringSlice(expected), ByteSliceSliceToStringSlice(actual))
+		}
+	}
+
+	expected = [][]byte{
+		[]byte("keyA"),
+		[]byte("keyB"),
+		[]byte("keyC"),
+		[]byte("keyD"),
+		[]byte("keyE"),
+		[]byte("keyF"),
+		[]byte("keyG"),
+		[]byte("keyH"),
+		[]byte("keyI"),
+		[]byte("keyJ"),
+		[]byte("keyK"),
+		[]byte("keyL"),
+		[]byte("keyM"),
+		[]byte("keyN"),
+		[]byte("keyO"),
+		[]byte("keyP"),
+		[]byte("keyQ"),
+		[]byte("keyR"),
+		[]byte("keyS"),
+		[]byte("keyT"),
+	}
+	actual = tree.C2.SSTable.Keys()
+	for i, k := range expected {
+		if bytes.Compare(k, actual[i]) != 0 {
+			t.Errorf("Expected C2 keys to be %v, but got %v", ByteSliceSliceToStringSlice(expected), ByteSliceSliceToStringSlice(actual))
+		}
+	}
+}
+
 func TestScan(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "data")
 	if err != nil {
 		t.Error(err)
 	}
 
-	tree, err := New(5, tempDir)
+	tree, err := New(2, tempDir)
 	if err != nil {
 		t.Error(err)
 	}
 
-	// 10 letters starting from ASCII 'A': 65
-	for i := 65; i <= 75; i++ {
+	// 25 letters starting from ASCII 'A': 65
+	for i := 65; i <= 89; i++ {
 		err = tree.Put(append([]byte("key"), byte(i)), []byte{byte(i)})
 		if err != nil {
 			t.Error(err)
@@ -118,35 +202,19 @@ func TestScan(t *testing.T) {
 	}
 
 	expected := map[string]string{
-		"keyG": "G",
-		"keyH": "H",
-		"keyI": "I",
-		"keyJ": "J",
-		"keyK": "K",
+		"keyT": "T",
+		"keyU": "U",
+		"keyV": "V",
+		"keyW": "W",
+		"keyX": "X",
+		"keyY": "Y",
 	}
-	actual, err := CaptureScan(tree, []byte("keyG"))
+	actual, err := CaptureScan(tree, []byte("keyT"))
 	if err != nil {
 		t.Error(err)
 	}
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("Expected scan to look like %v, but got %v", expected, actual)
-	}
-
-	expected = map[string]string{
-		"keyE": "E",
-		"keyF": "F",
-		"keyG": "G",
-		"keyH": "H",
-		"keyI": "I",
-		"keyJ": "J",
-		"keyK": "K",
-	}
-	actual, err = CaptureScan(tree, []byte("keyE"))
-	if err != nil {
-		t.Error(err)
-	}
-	if !reflect.DeepEqual(actual, expected) {
-		t.Errorf("Expected scan to look like be %v, but got %v", expected, actual)
 	}
 }
 
